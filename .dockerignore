@@ -1,0 +1,10 @@
+# Excluir entornos y secretos
+.env
+
+# Excluir dependencias locales
+node_modules/
+npm-debug.log*
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
