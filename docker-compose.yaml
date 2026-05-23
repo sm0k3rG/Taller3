@@ -7,7 +7,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - DB_HOST=db
+      - DB_HOST=db_gestor
     ports:
       - "3001:3000"
     depends_on:
@@ -25,7 +25,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - DB_HOST=db
+      - DB_HOST=db_gestor
     ports:
       - "3002:3000"
     depends_on:
@@ -62,7 +62,7 @@ services:
     ports:
       - "8080:80"
     environment:
-      PMA_HOST: db
+      PMA_HOST: db_gestor
       PMA_PORT: 3306
       MYSQL_ROOT_PASSWORD: 123456
     networks:
