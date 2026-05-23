@@ -1,16 +1,17 @@
-FROM node:20-alpine AS builder
-RUN apk add --no-cache python3 make g++
+FROM node:20-alpine
+
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+
+RUN npm install -g pnpm
+
+COPY package.json pnpm-lock.yaml ./
+
+RUN pnpm install --frozen-lockfile
+
 COPY . .
 
-FROM node:20-alpine AS runner
-ENV NODE_ENV=production
-WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/src ./src
+RUN pnpm run build
 
 EXPOSE 3000
-CMD ["node", "src/server.js"]
+
+CMD ["node", "dist/server.js"]
