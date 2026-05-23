@@ -1,0 +1,62 @@
+services:
+  backend1:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend1
+    env_file:
+      - ./backend/.env
+    environment:
+      - DB_HOST=db_gestor
+    ports:
+      - "3001:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - red_electrica
+    restart: on-failure
+
+  backend2:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend2
+    env_file:
+      - ./backend/.env
+    environment:
+      - DB_HOST=db_gestor
+    ports:
+      - "3002:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - red_electrica
+    restart: on-failure
+
+  db:
+    image: mysql:8.0
+    container_name: db_gestor
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: gestor_red_electrica
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - red_electrica
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p123456"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+networks:
+  red_electrica:
+    driver: bridge
+
+volumes:
+  db_data:
