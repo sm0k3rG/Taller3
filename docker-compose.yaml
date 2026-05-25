@@ -1,4 +1,30 @@
 services:
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend1
+      - backend2
+      - frontend
+    networks:
+      - red_electrica
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=/api
+    container_name: frontend
+    expose:
+      - "80"
+    networks:
+      - red_electrica
   backend1:
     build:
       context: ./backend
@@ -8,6 +34,7 @@ services:
       - ./.env
     environment:
       - DB_HOST=db_gestor
+      - REPLICA_NAME=Réplica 1
     expose:
       - "${PORT}"
     depends_on:
@@ -26,6 +53,7 @@ services:
       - ./.env
     environment:
       - DB_HOST=db_gestor
+      - REPLICA_NAME=Réplica 2
     expose:
       - "${PORT}"
     depends_on:
@@ -36,7 +64,7 @@ services:
     restart: on-failure
 
   db:
-    image: mysql:8.0
+    image: mariadb:11
     container_name: db_gestor
     env_file:
       - ./.env
@@ -48,7 +76,7 @@ services:
     networks:
       - red_electrica
     healthcheck:
-      test: ["CMD", "sh", "-c", "mysqladmin ping -h localhost -u$$DB_USER -p$$DB_PASSWORD"]
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
       timeout: 5s
       retries: 10
