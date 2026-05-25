@@ -1,4 +1,4 @@
-FROM node:24-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -15,6 +15,7 @@ FROM nginx:alpine AS runner
 
 WORKDIR /usr/share/nginx/html
 
+RUN rm -rf ./*
 COPY --from=builder /app/dist ./
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
