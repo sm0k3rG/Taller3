@@ -15,6 +15,7 @@ async function bootstrap() {
 
   app.listen(port, () => {
     console.log("\n Gestor de Red Eléctrica — API iniciada");
+    console.log(`\n Instancia: ${process.env.HOSTNAME}`)
     console.log(`   Entorno : ${nodeEnv}`);
     console.log(`   URL     : http://localhost:${port}/api`);
     console.log("\n Endpoints:");

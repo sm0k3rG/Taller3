@@ -20,6 +20,13 @@ export function createApp(): Application {
     });
   });
 
+  app.get('/api/replica', (_req, res) => {
+    res.status(200).json({
+      replica: process.env.REPLICA_NAME || process.env.HOSTNAME || 'desconocido',
+      timestamp: new Date().toISOString(),
+    })
+  })
+
   app.use("/api/dispositivos", dispositivoRoutes);
 
   app.use(notFoundHandler);

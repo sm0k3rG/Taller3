@@ -1,28 +1,13 @@
-export type ResultadoCapacidad = 'Permitido' | 'Denegado'
-
-export interface DispositivoCatalogo {
+export interface Dispositivo {
   id: number
-  nombre: string
+  name: string
   consumoKw: number
 }
 
-export interface DispositivoConectado {
-  instanceId: string
-  dispositivoId: number | null
-  nombre: string
-  consumoKw: number
-}
-
-export interface EstadoDomicilio {
-  domicilio: string
-  capacidadMaxKw: number
+export interface ResumenRed {
+  dispositivos: Dispositivo[]
   consumoActualKw: number
+  capacidadMaxKw: number
   porcentajeUso: number
-  resultado: ResultadoCapacidad
-  dispositivosConectados: DispositivoConectado[]
-  cantidadActivos: number
-}
-
-export interface RespuestaConexion extends EstadoDomicilio {
-  mensaje?: string
+  resultado: 'Permitido' | 'Denegado'
 }

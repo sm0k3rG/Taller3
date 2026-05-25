@@ -11,16 +11,16 @@ const seedData = [
 ];
 
 async function seed() {
-  console.log("🌱 Insertando dispositivos de prueba...");
+  console.log("Insertando dispositivos de prueba...");
   for (const d of seedData) {
     await getDb().insert(dispositivos).values(d);
-    console.log(`  ✔ ${d.name} (${d.consumoKw} kW)`);
+    console.log(` ${d.name} (${d.consumoKw} kW)`);
   }
   console.log("Seed completado");
   process.exit(0);
 }
 
 seed().catch((err) => {
-  console.error("❌ Error en seed:", err);
+  console.error("Error en seed:", err);
   process.exit(1);
 });

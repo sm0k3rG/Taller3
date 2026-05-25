@@ -1,16 +1,14 @@
-import type {
-  DispositivoCatalogo,
-  EstadoDomicilio,
-  RespuestaConexion,
-  ResultadoCapacidad,
-} from '@/types/gestorRed'
+import type { Dispositivo } from '@/types/gestorRed'
 
 function getApiBaseUrl(): string {
   const base = import.meta.env.VITE_API_URL
-  if (!base) {
-    throw new Error('VITE_API_URL no está configurada.')
-  }
+  if (!base) throw new Error('VITE_API_URL no está configurada.')
   return base.replace(/\/$/, '')
+}
+
+const baseHeaders = {
+  'Content-Type': 'application/json',
+  'Connection': 'close',
 }
 
 async function parseJson<T>(response: Response): Promise<T> {
@@ -19,74 +17,50 @@ async function parseJson<T>(response: Response): Promise<T> {
     try {
       const data = (await response.json()) as { error?: string }
       if (data.error) mensaje = data.error
-    } catch {
-      /* respuesta no JSON */
-    }
+    } catch {}
     throw new Error(mensaje)
   }
-  return (await response.json()) as T
+  return response.json() as Promise<T>
 }
 
-export async function obtenerCatalogo(): Promise<DispositivoCatalogo[]> {
-  const data = await parseJson<{ dispositivos: DispositivoCatalogo[] }>(
-    await fetch(`${getApiBaseUrl()}/dispositivos`),
+// Obtener todos los dispositivos conectados
+export async function obtenerDispositivos(): Promise<Dispositivo[]> {
+  const data = await parseJson<{ success: boolean; data: Dispositivo[] }>(
+    await fetch(`${getApiBaseUrl()}/dispositivos`, {
+      headers: baseHeaders,
+    })
   )
-  return data.dispositivos
+  return data.data
 }
 
-export async function obtenerEstado(): Promise<EstadoDomicilio> {
-  return parseJson<EstadoDomicilio>(await fetch(`${getApiBaseUrl()}/estado`))
+// Conectar un preset o personalizado
+export async function conectarDispositivo(name: string, consumoKw: number): Promise<Dispositivo> {
+  const data = await parseJson<{ success: boolean; data: Dispositivo }>(
+    await fetch(`${getApiBaseUrl()}/dispositivos`, {
+      method: 'POST',
+      headers: baseHeaders,
+      body: JSON.stringify({ name, consumoKw }),
+    })
+  )
+  return data.data
 }
 
-async function parseConexion(response: Response): Promise<RespuestaConexion> {
-  const data = (await response.json()) as RespuestaConexion
-  if (response.status === 409) return data
-  if (!response.ok) {
-    throw new Error(
-      (data as unknown as { error?: string }).error ??
-        `Error del servidor (${response.status})`,
+// Desconectar
+export async function desconectarDispositivo(id: number): Promise<void> {
+  await parseJson<{ success: boolean }>(
+    await fetch(`${getApiBaseUrl()}/dispositivos/${id}`, { method: 'DELETE', headers: baseHeaders, })
+  )
+}
+
+export async function obtenerReplica(): Promise<string> {
+  try {
+    const data = await parseJson<{ replica: string }>(
+      await fetch(`${getApiBaseUrl()}/replica`, {
+        headers: baseHeaders
+      })
     )
+    return data.replica
+  } catch {
+    return 'desconocido'
   }
-  return data
-}
-
-export async function conectarCatalogo(dispositivoId: number): Promise<RespuestaConexion> {
-  const response = await fetch(`${getApiBaseUrl()}/conectar`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ dispositivoId }),
-  })
-  return parseConexion(response)
-}
-
-export async function conectarPersonalizado(
-  nombre: string,
-  consumoKw: number,
-): Promise<RespuestaConexion> {
-  const response = await fetch(`${getApiBaseUrl()}/conectar`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nombre, consumoKw }),
-  })
-  return parseConexion(response)
-}
-
-export async function desconectarDispositivo(instanceId: string): Promise<EstadoDomicilio> {
-  return parseJson<EstadoDomicilio>(
-    await fetch(`${getApiBaseUrl()}/conectar/${instanceId}`, { method: 'DELETE' }),
-  )
-}
-
-export async function actualizarCapacidadMaxima(capacidadMaxKw: number): Promise<EstadoDomicilio> {
-  return parseJson<EstadoDomicilio>(
-    await fetch(`${getApiBaseUrl()}/domicilio/capacidad`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ capacidadMaxKw }),
-    }),
-  )
-}
-
-export function esDenegado(resultado: ResultadoCapacidad): boolean {
-  return resultado === 'Denegado'
 }
