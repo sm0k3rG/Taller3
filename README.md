@@ -12,6 +12,22 @@ El sistema se basa en una arquitectura de cuatro niveles desacoplados, implement
 2.  **Nivel de Presentación (Frontend):** Interfaz web interactiva (HTML/JS) para la visualización de datos de consumo y estado del sistema.
 3.  **Nivel de Lógica (Backend):** Réplicas dinámicas en Node.js, encargadas del procesamiento de consultas de carga y stock energético.
 4.  **Nivel de Datos (Base de Datos):** Servidor MySQL configurado con persistencia de volúmenes, garantizando que el estado de la red eléctrica se mantenga tras reinicios del sistema.
+## Topología y Composición de Docker (Orquestación)
+El clúster está gestionado por un único archivo `docker-compose.yaml` que define una topología estricta de servicios, redes aisladas y almacenamiento:
+
+### 1. Servicios y Replicación
+* **`proxy` (Nginx):** Único servicio que expone puertos al exterior (`80:80`). Actúa como barrera y director de orquesta.
+* **`frontend` (Web):** Contenedor de presentación construido desde su propio Dockerfile.
+* **`backend` (Node.js API):** Configurado con la directiva `deploy: replicas: 2` para levantar automáticamente dos instancias paralelas que reciben el tráfico balanceado del proxy.
+* **`database` (PostgreSQL):** Motor de base de datos protegido; **no expone puertos al host** por políticas de seguridad institucionales.
+
+### 2. Segmentación de Redes (Aislamiento)
+Para garantizar la seguridad, el sistema utiliza dos redes tipo `bridge`:
+* **`network_public`:** Conecta al Proxy, Frontend y Backend. Permite que Nginx reciba tráfico externo y lo rutee hacia las aplicaciones.
+* **`network_private`:** Red exclusiva y aislada donde solo el Backend y la Base de Datos pueden comunicarse. Impide cualquier intento de conexión directa a los datos desde el exterior.
+
+### 3. Almacenamiento (Volúmenes)
+* **`db_data`:** Volumen con nombre (named volume) manejado por el driver local, mapeado al directorio `/var/lib/postgresql/data` del contenedor de la base de datos. Garantiza que la información del sistema no se pierda si los contenedores son apagados o destruidos.
 
 ## Componentes Clave
 * **Balanceo de Carga:** Configurado con el algoritmo `least_conn` en Nginx, permitiendo dirigir el tráfico al nodo con menor carga activa para maximizar la capacidad de respuesta.
